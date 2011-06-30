@@ -1,6 +1,6 @@
-var http = require('http'),  
-    io = require('socket.io'), // for npm, otherwise use require('./path/to/socket.io') 
-    connect = require('connect');
+var http = require('http');
+var io = require('socket.io').listen(8889); // for npm, otherwise use require('./path/to/socket.io') 
+var connect = require('connect');
 
 var server = connect.createServer(
     connect.favicon()
@@ -8,26 +8,9 @@ var server = connect.createServer(
   , connect.static(__dirname + '/public')
 );
 server.listen(8888);
-  
-var model = {};
-var clients = [];
 
-// socket.io 
-var socket = io.listen(server); 
-socket.on('connection', function(client){ 
-  clients.push(client);
-  // new client is here! 
-  client.on('message', function(msg){
-    set(model, msg.path, msg.value);
-    clients.forEach(function(otherClient){
-      if (client !== otherClient)
-        otherClient.send(msg);
-    });
-  })
-  client.send({path:'', value:model});
-});
 
-function set(obj, path, value) {
+function set(obj, path, value){
   var lastObj = obj;
   var property;
   path.split('.').forEach(function(name){
@@ -41,3 +24,26 @@ function set(obj, path, value) {
   });
   lastObj[property] = value;
 }
+  
+var model = {};
+var clients = [];
+
+// socket.io 
+io.sockets.on('connection', function(socket){ 
+  clients.push(socket);
+  // new client is here! 
+  socket.on('channel', function(msg){
+    console.log('message:');
+    console.log(msg);
+    set(model, msg.path, msg.value);
+    clients.forEach(function(otherClient){
+      if (socket !== otherClient){
+        console.log("emitting..");
+        otherClient.emit("channel", msg);
+      }
+    });
+    console.log(msg);
+  });
+  socket.emit("channel", {path:'', value:model});
+});
+

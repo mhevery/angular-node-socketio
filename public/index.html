@@ -1,16 +1,15 @@
 <!doctype html>
 <html xmlns:ng="http://angularjs.org">
   <script src="http://code.angularjs.org/angular-0.9.16.min.js" ng:autobind></script>
-  <script src="/socket.io/socket.io.js"></script> 
+  <script src="http://localhost:8889/socket.io/socket.io.js"></script> 
   <script>
     angular.service('sharedModel', function($updateView){
       var model = {name:{first:'', last:''}};
       var lastModel = angular.copy(model);
 
-      var socket = new io.Socket('localhost'); 
-      socket.connect();
+      var socket = io.connect("http://localhost:8889");
 
-      socket.on('message', function(message){ 
+      socket.on('channel', function(message){ 
         set(model, message.path, message.value);
         set(lastModel, message.path, message.value);
         $updateView();
@@ -31,7 +30,7 @@
             // we are an object, so we need to recurse
             syncObject(path, src[name], dst[name] || {});
           } else {
-            socket.send({path:path, value:src[name]});
+            socket.emit("channel", {path:path, value:src[name]});
             dst[name] = angular.copy(src[name]);
           }
         }
