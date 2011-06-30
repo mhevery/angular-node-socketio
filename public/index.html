@@ -1,0 +1,74 @@
+<!doctype html>
+<html xmlns:ng="http://angularjs.org">
+  <script src="http://code.angularjs.org/angular-0.9.16.min.js" ng:autobind></script>
+  <script src="/socket.io/socket.io.js"></script> 
+  <script>
+    angular.service('sharedModel', function($updateView){
+      var model = {};
+      var lastModel = angular.copy(model);
+
+      var socket = new io.Socket('localhost'); 
+      socket.connect();
+
+      socket.on('message', function(message){ 
+        set(model, message.path, message.value);
+        set(lastModel, message.path, message.value);
+        $updateView();
+      });
+      
+      this.$onEval(function(){
+        syncObject('', model, lastModel);
+      });
+      
+      return model;
+      
+      function syncObject(parent, src, dst) {
+        for(var name in src) {
+          var path = (parent ? parent + '.' : '') + name;
+          if (src[name] === dst[name]) {
+            // do nothing we are in sync
+          } else if (typeof src[name] == 'object') {
+            // we are an object, so we need to recurse
+            syncObject(path, src[name], dst[name] || {});
+          } else {
+            socket.send({path:path, value:src[name]});
+            dst[name] = angular.copy(src[name]);
+          }
+        }
+      }
+      
+      function set(obj, path, value) {
+        if (!path) return angular.copy(value, obj);
+        var lastObj = obj;
+        var property;
+        angular.forEach(path.split('.'), function(name){
+          if (name) {
+            lastObj = obj;
+            obj = obj[property=name];
+            if (!obj) {
+              lastObj[property] = obj = {};
+            }
+          }
+        });
+        lastObj[property] = angular.copy(value);
+      }
+      
+    });
+  
+    FormController.$inject = ['sharedModel'];
+    function FormController(sharedModel){
+      this.sharedModel = sharedModel;
+    }
+  </script>
+ <body>
+  <div ng:controller="FormController" class="example">
+    Name: 
+    <input name="sharedModel.name.first">
+    <input name="sharedModel.name.last">
+   
+    <hr/>
+    Debug View:
+    <pre>sharedModel={{sharedModel}}</pre>
+  </div>
+ </body>
+</html>
