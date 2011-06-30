@@ -4,7 +4,7 @@
   <script src="/socket.io/socket.io.js"></script> 
   <script>
     angular.service('sharedModel', function($updateView){
-      var model = {};
+      var model = {name:{first:'', last:''}};
       var lastModel = angular.copy(model);
 
       var socket = new io.Socket('localhost'); 
@@ -65,6 +65,12 @@
     Name: 
     <input name="sharedModel.name.first">
     <input name="sharedModel.name.last">
+    <textarea name="sharedModel.html"></textarea>
+    <hr/>
+
+    {{sharedModel.html}}
+    <hr/>
+    {{sharedModel.html | html}}
    
     <hr/>
     Debug View:
