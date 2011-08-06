@@ -1,13 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html xmlns:ng="http://angularjs.org">
   <script src="http://code.angularjs.org/angular-0.9.16.min.js" ng:autobind></script>
-  <script src="socket.io/socket.io.js"></script> 
+  <script src="http://localhost:8889/socket.io/socket.io.js"></script> 
   <script>
     angular.service('sharedModel', function($updateView){
       var model = {name:{first:'', last:''}};
       var lastModel = angular.copy(model);
 
-      var socket = io.connect('http://'+window.location.host+':8889/');
+      var socket = io.connect('http://localhost:8889/');
 
       socket.on('channel', function(message){ 
         set(model, message.path, message.value);
