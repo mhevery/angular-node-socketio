@@ -2,6 +2,9 @@ var http = require('http');
 var io = require('socket.io').listen(8889); // for npm, otherwise use require('./path/to/socket.io') 
 var connect = require('connect');
 
+// Reducing socket.io debug statements
+io.set('log level', 2);
+
 var server = connect.createServer(
     connect.favicon()
   , connect.logger()
