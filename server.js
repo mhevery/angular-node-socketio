@@ -1,14 +1,17 @@
-var http = require('http');
-var io = require('socket.io').listen(8889); // for npm, otherwise use require('./path/to/socket.io') 
-var connect = require('connect');
+var http = require('http'),
+    fs   = require('fs'),
+    io   = require('socket.io').listen(8889); // for npm, otherwise use require('./path/to/socket.io') 
 
-var server = connect.createServer(
-    connect.favicon()
-  , connect.logger()
-  , connect.static(__dirname + '/public')
-);
-server.listen(8888);
+// Reducing socket.io log (debug) statements
+io.set('log level', 2);
 
+http.createServer(function (request, response) {
+	fs.readFile(__dirname+'/public/index.html', function (err, data) {
+		if (err) throw err;
+		response.setHeader("Content-Type", "text/html");
+		response.end(data);
+	});
+}).listen(8888);
 
 function set(obj, path, value){
   var lastObj = obj;
