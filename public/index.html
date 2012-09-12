@@ -1,27 +1,29 @@
 <!DOCTYPE html>
-<html xmlns:ng="http://angularjs.org">
+<html ng-app="SocketIODemo">
   <meta charset="utf-8">
-  <script src="http://code.angularjs.org/angular-0.9.19.min.js" ng:autobind></script>
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular-sanitize.min.js"></script>
   <script src="http://localhost:8889/socket.io/socket.io.js"></script> 
   <script>
-    angular.service('sharedModel', function($updateView){
+    angular.module('SocketIODemo', ['ngSanitize']).factory('sharedModel', function($rootScope) {
       var model = {name:{first:'', last:''}};
       var lastModel = angular.copy(model);
 
       var socket = io.connect('http://localhost:8889/');
 
-      socket.on('channel', function(message){ 
+      socket.on('channel', function(message){
         set(model, message.path, message.value);
         set(lastModel, message.path, message.value);
-        $updateView();
+        $rootScope.sharedModel = model;
+        $rootScope.$apply();
       });
-      
-      this.$onEval(function(){
+
+      $rootScope.$watch('sharedModel', function() {
         syncObject('', model, lastModel);
-      });
-      
+      }, true);
+
       return model;
-      
+
       function syncObject(parent, src, dst) {
         for(var name in src) {
           var path = (parent ? parent + '.' : '') + name;
@@ -36,7 +38,7 @@
           }
         }
       }
-      
+
       function set(obj, path, value) {
         if (!path) return angular.copy(value, obj);
         var lastObj = obj;
@@ -52,29 +54,25 @@
         });
         lastObj[property] = angular.copy(value);
       }
-      
     });
-  
-    FormController.$inject = ['sharedModel'];
-    function FormController(sharedModel){
-      this.sharedModel = sharedModel;
+
+    function FormController($scope, sharedModel){
     }
+    //FormController.$inject = ['$scope', 'sharedModel'];
   </script>
  <body>
-  <div ng:controller="FormController" class="example">
-    Name: 
-    <input name="sharedModel.name.first">
-    <input name="sharedModel.name.last">
-    <textarea name="sharedModel.html"></textarea>
+  <div ng-controller="FormController">
+    <input placeholder="name.first" ng-model="sharedModel.name.first">
+    <input placeholder="name.last" ng-model="sharedModel.name.last">
+    <br/>
+    <textarea placeholder="html" ng-model="sharedModel.html"></textarea>
     <hr/>
-
     {{sharedModel.html}}
     <hr/>
-    {{sharedModel.html | html}}
-   
+    <div ng-bind-html-unsafe="sharedModel.html"></div>
     <hr/>
     Debug View:
-    <pre>sharedModel={{sharedModel}}</pre>
+    <pre>sharedModel={{sharedModel | json}}</pre>
   </div>
  </body>
 </html>
